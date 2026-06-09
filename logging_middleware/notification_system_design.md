@@ -782,3 +782,63 @@ AND created\_at >= NOW() - INTERVAL '7 days';
 
 \### End of Stage 3
 
+
+
+\### stage 5
+
+function notify\_all(student\_ids, message):
+
+
+
+&#x20;   notification\_id = save\_notification\_to\_db(message)
+
+
+
+&#x20;   for student\_id in student\_ids:
+
+&#x20;       push\_to\_queue({
+
+&#x20;           "student\_id": student\_id,
+
+&#x20;           "notification\_id": notification\_id,
+
+&#x20;           "message": message
+
+&#x20;       })
+
+
+
+
+
+worker process\_queue():
+
+
+
+&#x20;   while true:
+
+&#x20;       task = get\_from\_queue()
+
+
+
+&#x20;       try:
+
+&#x20;           send\_email(task.student\_id, task.message)
+
+&#x20;       except:
+
+&#x20;           retry\_or\_send\_to\_DLQ(task)
+
+
+
+&#x20;       try:
+
+&#x20;           push\_to\_app(task.student\_id, task.message)
+
+&#x20;       except:
+
+&#x20;           retry\_or\_send\_to\_DLQ(task)
+
+
+
+&#x20;       mark\_as\_completed(task)
+
