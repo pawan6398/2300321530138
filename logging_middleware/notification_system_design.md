@@ -592,3 +592,193 @@ INSERT INTO notifications(title, message, type)
 
 VALUES ('Hello', 'Test message', 'INFO');
 
+
+
+
+
+\## Stage 3 – Query Optimization \& Performance
+
+
+
+\### 1. Is the given query accurate?
+
+
+
+Given query:
+
+SELECT FROM notifications
+
+WHERE studentID 1042 AND isRead false
+
+ORDER BY createdAt ASC;
+
+
+
+❌ This query is NOT correct.
+
+
+
+\### Problems:
+
+\- SELECT \* missing
+
+\- Incorrect syntax for conditions
+
+\- Boolean format wrong
+
+\- Column naming inconsistent
+
+
+
+\### Correct Query:
+
+SELECT \*
+
+FROM notifications
+
+WHERE student\_id = 1042
+
+AND is\_read = FALSE
+
+ORDER BY created\_at ASC;
+
+
+
+\---
+
+
+
+\### 2. Why is this query slow?
+
+
+
+This query is slow due to:
+
+
+
+\- Large dataset (5,000,000+ records)
+
+\- Full table scan if index is missing
+
+\- ORDER BY sorting large data
+
+\- Filtering on non-optimized columns
+
+
+
+\---
+
+
+
+\### 3. Improvements
+
+
+
+To optimize performance:
+
+
+
+\- Create composite index:
+
+CREATE INDEX idx\_student\_unread
+
+ON notifications(student\_id, is\_read, created\_at);
+
+
+
+\- Use pagination:
+
+SELECT \*
+
+FROM notifications
+
+WHERE student\_id = 1042
+
+AND is\_read = FALSE
+
+ORDER BY created\_at ASC
+
+LIMIT 50;
+
+
+
+\- Avoid SELECT \*
+
+\- Fetch only required fields
+
+
+
+\---
+
+
+
+\### 4. Computation Cost
+
+
+
+Without index:
+
+\- Time Complexity: O(N)
+
+\- Sorting: O(N log N)
+
+
+
+With index:
+
+\- Time Complexity: O(log N + k)
+
+
+
+\---
+
+
+
+\### 5. Is indexing every column a good idea?
+
+
+
+❌ No, it is NOT a good idea.
+
+
+
+\### Reasons:
+
+\- Increases storage cost
+
+\- Slows INSERT/UPDATE operations
+
+\- Too many indexes reduce performance
+
+\- Maintenance overhead increases
+
+
+
+✔ Only important columns should be indexed.
+
+
+
+\---
+
+
+
+\### 6. Query: Placement notifications in last 7 days
+
+
+
+SELECT \*
+
+FROM notifications
+
+WHERE notification\_type = 'Placement'
+
+AND created\_at >= NOW() - INTERVAL '7 days';
+
+
+
+\---
+
+
+
+\### End of Stage 3
+
