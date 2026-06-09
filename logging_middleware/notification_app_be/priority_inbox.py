@@ -10,21 +10,9 @@ PRIORITY = {
     "Event": 1
 }
 
-# ---------------------------
-# MOCK DATA (fallback)
-# ---------------------------
-def mock_notifications():
-    return [
-        {"notificationType": "Placement", "message": "Job offer from ABC Company", "createdAt": "2026-06-08 10:00:00"},
-        {"notificationType": "Result", "message": "Exam result declared", "createdAt": "2026-06-07 09:00:00"},
-        {"notificationType": "Event", "message": "Tech event tomorrow", "createdAt": "2026-06-06 08:00:00"},
-        {"notificationType": "Placement", "message": "Interview call from XYZ", "createdAt": "2026-06-05 11:00:00"},
-        {"notificationType": "Result", "message": "Assignment marks published", "createdAt": "2026-06-04 12:00:00"},
-    ]
-
-# ---------------------------
-# Fetch notifications
-# ---------------------------
+# -----------------------------
+# Fetch notifications (API + fallback)
+# -----------------------------
 def fetch_notifications():
     headers = {
         "Authorization": "Bearer test-token"
@@ -32,37 +20,39 @@ def fetch_notifications():
 
     try:
         response = requests.get(API_URL, headers=headers, timeout=5)
-
-        if response.status_code != 200:
-            print("API failed, using mock data.")
-            return mock_notifications()
+        response.raise_for_status()
 
         data = response.json()
 
-        if isinstance(data, dict) and "data" in data:
-            return data["data"]
+        if isinstance(data, dict) and "notifications" in data:
+            return data["notifications"]
 
-        if isinstance(data, list):
-            return data
-
-        return mock_notifications()
+        return []
 
     except Exception as e:
-        print("Error fetching API, using mock data:", e)
-        return mock_notifications()
+        print("API unreachable, using fallback data:", e)
 
-# ---------------------------
-# Parse date safely
-# ---------------------------
-def parse_date(date_str):
+        # fallback mock data (ensures program always works)
+        return [
+            {"Type": "Placement", "Message": "Company hiring announcement", "Timestamp": "2026-04-22 17:51:30"},
+            {"Type": "Result", "Message": "Mid-sem result declared", "Timestamp": "2026-04-22 17:50:30"},
+            {"Type": "Event", "Message": "Tech fest coming soon", "Timestamp": "2026-04-22 17:49:30"},
+            {"Type": "Result", "Message": "Project review completed", "Timestamp": "2026-04-22 17:48:30"},
+            {"Type": "Placement", "Message": "Interview call received", "Timestamp": "2026-04-22 17:47:30"},
+        ]
+
+# -----------------------------
+# Parse timestamp safely
+# -----------------------------
+def parse_date(ts):
     try:
-        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+        return datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
     except:
         return datetime.min
 
-# ---------------------------
-# Get Top N notifications
-# ---------------------------
+# -----------------------------
+# Get Top N Notifications
+# -----------------------------
 def get_top_notifications(notifications, top_n=10):
 
     processed = []
@@ -71,26 +61,26 @@ def get_top_notifications(notifications, top_n=10):
         if not isinstance(n, dict):
             continue
 
-        n_type = n.get("notificationType", "")
-        created_at = n.get("createdAt", "")
+        n_type = n.get("Type", "")
+        timestamp = n.get("Timestamp", "")
 
         n["priority_score"] = PRIORITY.get(n_type, 0)
-        n["parsed_date"] = parse_date(created_at)
+        n["parsed_time"] = parse_date(timestamp)
 
         processed.append(n)
 
-    # Sort by priority + recency
+    # Sort by priority first, then recency
     sorted_notifications = sorted(
         processed,
-        key=lambda x: (x["priority_score"], x["parsed_date"]),
+        key=lambda x: (x["priority_score"], x["parsed_time"]),
         reverse=True
     )
 
     return sorted_notifications[:top_n]
 
-# ---------------------------
+# -----------------------------
 # Main function
-# ---------------------------
+# -----------------------------
 def main():
 
     notifications = fetch_notifications()
@@ -104,7 +94,7 @@ def main():
     print("\n🔥 TOP 10 PRIORITY NOTIFICATIONS:\n")
 
     for i, n in enumerate(top_notifications, 1):
-        print(f"{i}. [{n.get('notificationType')}] {n.get('message')} - {n.get('createdAt')}")
+        print(f"{i}. [{n.get('Type')}] {n.get('Message')} - {n.get('Timestamp')}")
 
 # Run program
 if __name__ == "__main__":
