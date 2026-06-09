@@ -486,3 +486,109 @@ ws://server/notifications/live
 
 
 
+\## Stage 2 – Persistent Storage Design
+
+
+
+\### 1. Database Choice
+
+PostgreSQL is used because it is reliable, scalable, and ACID compliant.
+
+
+
+\### 2. Schema Design
+
+Users Table:
+
+\- user\_id (PK)
+
+\- name
+
+\- email
+
+\- created\_at
+
+
+
+Notifications Table:
+
+\- notification\_id (PK)
+
+\- title
+
+\- message
+
+\- type
+
+\- payload (JSONB)
+
+\- created\_at
+
+
+
+User\_Notifications Table:
+
+\- id (PK)
+
+\- user\_id (FK)
+
+\- notification\_id (FK)
+
+\- is\_read
+
+\- read\_at
+
+\- created\_at
+
+
+
+\### 3. Problems at Scale
+
+\- Large data slows queries
+
+\- High traffic load
+
+\- Database size increases
+
+
+
+\### 4. Solutions
+
+\- Indexing on user\_id
+
+\- Partitioning by time
+
+\- Redis caching
+
+\- Kafka for async processing
+
+\- Pagination
+
+
+
+\### 5. SQL Queries
+
+
+
+Get notifications:
+
+SELECT \* FROM user\_notifications WHERE user\_id = 1;
+
+
+
+Mark as read:
+
+UPDATE user\_notifications
+
+SET is\_read = true
+
+WHERE user\_id = 1 AND notification\_id = 10;
+
+
+
+Insert notification:
+
+INSERT INTO notifications(title, message, type)
+
+VALUES ('Hello', 'Test message', 'INFO');
+
